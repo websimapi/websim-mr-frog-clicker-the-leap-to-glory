@@ -688,7 +688,7 @@
         }
 
         // Click effect component
-        function ClickEffect({ x, y, value, onComplete }) {
+        function ClickEffect({ x, y, value, bugAsset, onComplete }) {
             useEffect(() => {
                 const timer = setTimeout(onComplete, 1000);
                 return () => clearTimeout(timer);
@@ -699,7 +699,19 @@
                     className="click-effect" 
                     style={{ left: x, top: y }}
                 >
-                    +{value} 🐞
+                    +{value} {bugAsset ? (
+                        <img 
+                            src={bugAsset} 
+                            alt="bug" 
+                            style={{ 
+                                width: '20px', 
+                                height: '20px', 
+                                display: 'inline-block',
+                                verticalAlign: 'middle',
+                                marginLeft: '5px'
+                            }} 
+                        />
+                    ) : '🐞'}
                 </div>
             );
         }
@@ -757,7 +769,13 @@
                 }));
 
                 const effectId = Date.now() + Math.random();
-                setClickEffects(prev => [...prev, { id: effectId, x, y, value: earnedBugs }]);
+                setClickEffects(prev => [...prev, { 
+                    id: effectId, 
+                    x, 
+                    y, 
+                    value: earnedBugs,
+                    bugAsset: assets?.bug 
+                }]);
             }
 
             function removeClickEffect(id) {
@@ -855,6 +873,7 @@
                                         x={effect.x}
                                         y={effect.y}
                                         value={effect.value}
+                                        bugAsset={effect.bugAsset}
                                         onComplete={() => removeClickEffect(effect.id)}
                                     />
                                 ))}
