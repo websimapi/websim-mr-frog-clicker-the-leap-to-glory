@@ -522,6 +522,89 @@
                 return 'An unexpected error occurred. Please try again.';
             }
         };
+
+        // Audio Manager
+        const AudioManager = {
+            audioContext: null,
+            soundBuffers: {},
+            initialized: false,
+
+            async init() {
+                if (this.initialized) return;
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    // Unlock audio context on first user gesture
+                    const unlockAudio = () => {
+                        if (this.audioContext.state === 'suspended') {
+                            this.audioContext.resume();
+                        }
+                        document.removeEventListener('click', unlockAudio);
+                        document.removeEventListener('touchstart', unlockAudio);
+                    };
+                    document.addEventListener('click', unlockAudio);
+                    document.addEventListener('touchstart', unlockAudio);
+                    this.initialized = true;
+                } catch (e) {
+                    console.error("Web Audio API is not supported in this browser", e);
+                }
+            },
+
+            async loadSound(name, url) {
+                if (!this.audioContext) {
+                    console.warn('AudioContext not initialized, cannot load sound:', name);
+                    return;
+                }
+                if (this.soundBuffers[name]) return this.soundBuffers[name];
+
+                try {
+                    const response = await fetch(url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                    this.soundBuffers[name] = audioBuffer;
+                    return audioBuffer;
+                } catch (error) {
+                    console.error(`Error loading sound ${name}:`, error);
+                    this.soundBuffers[name] = null; // Mark as failed to prevent retries
+                    return null;
+                }
+            },
+
+            playSound(name, volume = 1) {
+                if (!this.audioContext || !this.soundBuffers[name]) {
+                    console.warn(`Sound ${name} not loaded or AudioContext not ready.`);
+                    return;
+                }
+                const source = this.audioContext.createBufferSource();
+                source.buffer = this.soundBuffers[name];
+                
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                source.start(0);
+            },
+
+            async loadGameSounds() {
+                await this.init(); // Ensure context is initialized
+                if (!this.audioContext) return;
+
+                const soundFiles = {
+                    click: './click_sound.mp3',
+                    upgrade: './upgrade_sound.mp3',
+                    // Add more sounds here, e.g., world_loaded: './world_loaded_sound.mp3'
+                };
+
+                const loadPromises = Object.entries(soundFiles).map(([soundName, soundUrl]) =>
+                    this.loadSound(soundName, soundUrl).catch(err => {
+                        console.warn(`Skipping sound ${soundName} due to loading error.`);
+                        return null; // Ensure Promise.allSettled completes
+                    })
+                );
+                await Promise.allSettled(loadPromises);
+                console.log('Game sounds loaded (or attempted).');
+            }
+        };
         
         // Asset management
         const AssetManager = {
@@ -724,6 +807,19 @@
             const [assets, setAssets] = useState(null);
             const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
             const [error, setError] = useState(null);
+            const [audioInitialized, setAudioInitialized] = useState(false);
+
+            useEffect(() => {
+                if (!audioInitialized) {
+                    AudioManager.loadGameSounds().then(() => {
+                        setAudioInitialized(true);
+                        console.log("Audio manager initialized and sounds loaded.");
+                    }).catch(err => {
+                        console.error("Failed to initialize audio manager:", err);
+                    });
+                }
+            }, [audioInitialized]);
+
 
             useEffect(() => {
                 if (!assets && !isGeneratingAssets) {
@@ -768,6 +864,8 @@
                     totalClicks: prev.totalClicks + 1
                 }));
 
+                AudioManager.playSound('click', 0.7); // Play click sound
+
                 const effectId = Date.now() + Math.random();
                 setClickEffects(prev => [...prev, { 
                     id: effectId, 
@@ -806,6 +904,7 @@
 
                         return newState;
                     });
+                    AudioManager.playSound('upgrade', 0.8); // Play upgrade sound
                 }
             }
 
@@ -955,6 +1054,8 @@
                                     onLoadWorld={(world) => {
                                         setAssets(world.assets);
                                         setGameState(prev => ({ ...prev, currentWorld: world }));
+                                        // Optionally play a sound when world is loaded
+                                        // AudioManager.playSound('world_loaded'); 
                                     }}
                                 />
                             )}
