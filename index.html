@@ -324,26 +324,26 @@
 
             async getDefaultAssets() {
                 const defaults = {
-                    frog: await this.generateAsset("cute green cartoon frog character, friendly face, simple design", true),
-                    bug: await this.generateAsset("small cartoon fly or bug, golden color", true),
+                    frog: await this.generateAsset("cute green cartoon frog character, friendly face, simple design, white background", true),
+                    bug: await this.generateAsset("small cartoon fly or bug, golden color, white background", true),
                     background: await this.generateAsset("peaceful pond with lily pads, cartoon style"),
-                    foreground: await this.generateAsset("swamp grass and reeds, transparent background", true),
-                    lighting: await this.generateAsset("soft warm sunlight rays through trees", true)
+                    foreground: await this.generateAsset("swamp grass and reeds, white background", true),
+                    lighting: await this.generateAsset("soft warm sunlight rays through trees, white background", true)
                 };
                 return defaults;
             },
 
             async generateWorldAssets(worldData) {
                 const assets = {
-                    frog: await this.generateAsset(worldData.frogPrompt, true),
-                    bug: await this.generateAsset(worldData.bugPrompt || "small cartoon fly or bug, golden color", true),
+                    frog: await this.generateAsset(worldData.frogPrompt + ", white background", true),
+                    bug: await this.generateAsset((worldData.bugPrompt || "small cartoon fly or bug, golden color") + ", white background", true),
                     background: await this.generateAsset(worldData.backgroundPrompt),
                     foreground: worldData.foregroundPrompt ? 
-                        await this.generateAsset(worldData.foregroundPrompt, true) : null,
+                        await this.generateAsset(worldData.foregroundPrompt + ", white background", true) : null,
                     lighting: worldData.lightingPrompt ? 
-                        await this.generateAsset(worldData.lightingPrompt, true) : null,
+                        await this.generateAsset(worldData.lightingPrompt + ", white background", true) : null,
                     environment: worldData.environmentPrompt ? 
-                        await this.generateAsset(worldData.environmentPrompt, true) : null
+                        await this.generateAsset(worldData.environmentPrompt + ", white background", true) : null
                 };
                 return assets;
             }
@@ -523,25 +523,6 @@
                                 }} />
                             )}
                             
-                            <div className="stats">
-                                <div className="stat-card">
-                                    <div className="stat-value">{Math.floor(gameState.bugs)}</div>
-                                    <div>Bugs Caught</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-value">{gameState.bugsPerClick}</div>
-                                    <div>Per Click</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-value">{gameState.bugsPerSecond}</div>
-                                    <div>Per Second</div>
-                                </div>
-                                <div className="stat-card">
-                                    <div className="stat-value">{gameState.totalClicks}</div>
-                                    <div>Total Clicks</div>
-                                </div>
-                            </div>
-
                             <div className="frog-container">
                                 <img 
                                     src={assets.frog} 
@@ -588,6 +569,24 @@
                                     pointerEvents: 'none'
                                 }} />
                             )}
+                            <div className="stats">
+                                <div className="stat-card">
+                                    <div className="stat-value">{Math.floor(gameState.bugs)}</div>
+                                    <div>Bugs Caught</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{gameState.bugsPerClick}</div>
+                                    <div>Per Click</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{gameState.bugsPerSecond}</div>
+                                    <div>Per Second</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{gameState.totalClicks}</div>
+                                    <div>Total Clicks</div>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="sidebar">
