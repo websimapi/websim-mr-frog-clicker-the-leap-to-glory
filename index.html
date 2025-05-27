@@ -61,6 +61,7 @@
             padding: 30px;
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            position: relative;
         }
 
         .frog-container {
@@ -308,22 +309,13 @@
 
                 try {
                     const result = await websim.imageGen({
-                        prompt: transparent ? `${prompt}, white background` : prompt,
-                        transparent: false,
+                        prompt: prompt,
+                        transparent: transparent,
                         aspect_ratio: "1:1"
                     });
 
-                    let finalUrl = result.url;
-                    
-                    // If we need transparency, we'll simulate it with CSS
-                    if (transparent) {
-                        // In a real implementation, you'd process the image to remove white background
-                        // For now, we'll just use the image as-is and apply CSS filters
-                        finalUrl = result.url;
-                    }
-
-                    localStorage.setItem(cacheKey, finalUrl);
-                    return finalUrl;
+                    localStorage.setItem(cacheKey, result.url);
+                    return result.url;
                 } catch (error) {
                     console.error('Failed to generate asset:', error);
                     return null;
@@ -334,9 +326,26 @@
                 const defaults = {
                     frog: await this.generateAsset("cute green cartoon frog character, friendly face, simple design", true),
                     bug: await this.generateAsset("small cartoon fly or bug, golden color", true),
-                    background: await this.generateAsset("peaceful pond with lily pads, cartoon style")
+                    background: await this.generateAsset("peaceful pond with lily pads, cartoon style"),
+                    foreground: await this.generateAsset("swamp grass and reeds, transparent background", true),
+                    lighting: await this.generateAsset("soft warm sunlight rays through trees", true)
                 };
                 return defaults;
+            },
+
+            async generateWorldAssets(worldData) {
+                const assets = {
+                    frog: await this.generateAsset(worldData.frogPrompt, true),
+                    bug: await this.generateAsset(worldData.bugPrompt || "small cartoon fly or bug, golden color", true),
+                    background: await this.generateAsset(worldData.backgroundPrompt),
+                    foreground: worldData.foregroundPrompt ? 
+                        await this.generateAsset(worldData.foregroundPrompt, true) : null,
+                    lighting: worldData.lightingPrompt ? 
+                        await this.generateAsset(worldData.lightingPrompt, true) : null,
+                    environment: worldData.environmentPrompt ? 
+                        await this.generateAsset(worldData.environmentPrompt, true) : null
+                };
+                return assets;
             }
         };
 
@@ -493,7 +502,27 @@
                     </div>
 
                     <div className="game-content">
-                        <div className="main-game">
+                        <div className="main-game" style={{
+                            backgroundImage: assets?.background ? `url(${assets.background})` : 'none',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            position: 'relative'
+                        }}>
+                            {assets?.lighting && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    backgroundImage: `url(${assets.lighting})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    opacity: 0.3,
+                                    pointerEvents: 'none'
+                                }} />
+                            )}
+                            
                             <div className="stats">
                                 <div className="stat-card">
                                     <div className="stat-value">{Math.floor(gameState.bugs)}</div>
@@ -519,7 +548,6 @@
                                     alt="Mr. Frog" 
                                     className="frog"
                                     onClick={handleFrogClick}
-                                    style={{ filter: assets.frog.includes('white background') ? 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)' : 'none' }}
                                 />
                                 {clickEffects.map(effect => (
                                     <ClickEffect 
@@ -531,6 +559,35 @@
                                     />
                                 ))}
                             </div>
+
+                            {assets?.foreground && (
+                                <div style={{
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    height: '30%',
+                                    backgroundImage: `url(${assets.foreground})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'bottom',
+                                    pointerEvents: 'none'
+                                }} />
+                            )}
+
+                            {assets?.environment && (
+                                <div style={{
+                                    position: 'absolute',
+                                    top: '10%',
+                                    right: '10%',
+                                    width: '100px',
+                                    height: '100px',
+                                    backgroundImage: `url(${assets.environment})`,
+                                    backgroundSize: 'contain',
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundPosition: 'center',
+                                    pointerEvents: 'none'
+                                }} />
+                            )}
                         </div>
 
                         <div className="sidebar">
@@ -634,7 +691,11 @@
                 name: '',
                 description: '',
                 frogPrompt: '',
-                backgroundPrompt: ''
+                bugPrompt: '',
+                backgroundPrompt: '',
+                foregroundPrompt: '',
+                lightingPrompt: '',
+                environmentPrompt: ''
             });
             const [isCreating, setIsCreating] = useState(false);
 
@@ -648,24 +709,31 @@
 
                 setIsCreating(true);
                 try {
-                    const assets = {
-                        frog: await AssetManager.generateAsset(newWorld.frogPrompt, true),
-                        bug: await AssetManager.generateAsset("small cartoon fly or bug, golden color", true),
-                        background: newWorld.backgroundPrompt ? 
-                            await AssetManager.generateAsset(newWorld.backgroundPrompt) : 
-                            await AssetManager.generateAsset("peaceful pond with lily pads, cartoon style")
-                    };
+                    const assets = await AssetManager.generateWorldAssets(newWorld);
 
                     await room.collection('frog_world').create({
                         name: newWorld.name,
                         description: newWorld.description,
                         frogPrompt: newWorld.frogPrompt,
+                        bugPrompt: newWorld.bugPrompt,
                         backgroundPrompt: newWorld.backgroundPrompt,
+                        foregroundPrompt: newWorld.foregroundPrompt,
+                        lightingPrompt: newWorld.lightingPrompt,
+                        environmentPrompt: newWorld.environmentPrompt,
                         assets: assets,
                         thumbnail: assets.frog
                     });
 
-                    setNewWorld({ name: '', description: '', frogPrompt: '', backgroundPrompt: '' });
+                    setNewWorld({ 
+                        name: '', 
+                        description: '', 
+                        frogPrompt: '', 
+                        bugPrompt: '',
+                        backgroundPrompt: '',
+                        foregroundPrompt: '',
+                        lightingPrompt: '',
+                        environmentPrompt: ''
+                    });
                     setShowCreateForm(false);
                 } catch (error) {
                     console.error('Failed to create world:', error);
@@ -713,7 +781,7 @@
                             </div>
 
                             <div className="form-group">
-                                <label>Frog Description</label>
+                                <label>Frog Character</label>
                                 <input 
                                     type="text"
                                     value={newWorld.frogPrompt}
@@ -723,12 +791,52 @@
                             </div>
 
                             <div className="form-group">
-                                <label>Background Description (optional)</label>
+                                <label>Bug/Food Type (optional)</label>
+                                <input 
+                                    type="text"
+                                    value={newWorld.bugPrompt}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, bugPrompt: e.target.value }))}
+                                    placeholder="e.g., glowing fireflies, golden beetles"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Background Scene</label>
                                 <input 
                                     type="text"
                                     value={newWorld.backgroundPrompt}
                                     onChange={(e) => setNewWorld(prev => ({ ...prev, backgroundPrompt: e.target.value }))}
                                     placeholder="e.g., enchanted forest with glowing mushrooms"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Foreground Elements (optional)</label>
+                                <input 
+                                    type="text"
+                                    value={newWorld.foregroundPrompt}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, foregroundPrompt: e.target.value }))}
+                                    placeholder="e.g., swamp grass, lily pads, crystals"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Lighting Effects (optional)</label>
+                                <input 
+                                    type="text"
+                                    value={newWorld.lightingPrompt}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, lightingPrompt: e.target.value }))}
+                                    placeholder="e.g., moonbeams, magical glow, sunset rays"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Environment Details (optional)</label>
+                                <input 
+                                    type="text"
+                                    value={newWorld.environmentPrompt}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, environmentPrompt: e.target.value }))}
+                                    placeholder="e.g., floating islands, ancient ruins, magical portals"
                                 />
                             </div>
 
@@ -786,4 +894,3 @@
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
-
