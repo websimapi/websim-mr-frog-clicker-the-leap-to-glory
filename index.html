@@ -521,10 +521,10 @@
             const [error, setError] = useState(null);
 
             useEffect(() => {
-                if (!assets) {
+                if (!assets && !isGeneratingAssets) {
                     loadDefaultAssets();
                 }
-            }, []);
+            }, [assets, isGeneratingAssets]);
 
             async function loadDefaultAssets() {
                 setIsGeneratingAssets(true);
@@ -598,7 +598,7 @@
                 }
             }
 
-            if (isGeneratingAssets) {
+            if (isGeneratingAssets || !assets) {
                 return (
                     <div className="game-container">
                         <div className="header">
@@ -651,7 +651,7 @@
                             
                             <div className="frog-container">
                                 <img 
-                                    src={assets.frog} 
+                                    src={assets?.frog || '🐸'} 
                                     alt="Mr. Frog" 
                                     className="frog"
                                     onClick={handleFrogClick}
