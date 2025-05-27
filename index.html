@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐸 Mr. Frog Clicker: The Leap to Glory!</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2e7d32, #66bb6a, #4caf50);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .game-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .main-game {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .frog-container {
+            position: relative;
+            margin: 30px 0;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .frog {
+            width: 200px;
+            height: 200px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .frog:hover {
+            transform: scale(1.05);
+        }
+
+        .frog:active {
+            transform: scale(0.95);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            margin-right: 2px;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .upgrade-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .upgrade-button {
+            width: 100%;
+            padding: 8px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .upgrade-button:hover {
+            background: #45a049;
+        }
+
+        .upgrade-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .world-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .world-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            color: white;
+        }
+
+        .world-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .world-thumbnail {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .create-world-form {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .primary-button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .primary-button:hover {
+            background: #e55a2b;
+        }
+
+        .click-effect {
+            position: absolute;
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px) scale(1.2);
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .game-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .frog {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useSyncExternalStore } = React;
+
+        // Global state and socket setup
+        const room = new WebsimSocket();
+        
+        // Asset management
+        const AssetManager = {
+            async generateAsset(prompt, transparent = false) {
+                const cacheKey = `asset_${prompt}_${transparent}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) return cached;
+
+                try {
+                    const result = await websim.imageGen({
+                        prompt: transparent ? `${prompt}, white background` : prompt,
+                        transparent: false,
+                        aspect_ratio: "1:1"
+                    });
+
+                    let finalUrl = result.url;
+                    
+                    // If we need transparency, we'll simulate it with CSS
+                    if (transparent) {
+                        // In a real implementation, you'd process the image to remove white background
+                        // For now, we'll just use the image as-is and apply CSS filters
+                        finalUrl = result.url;
+                    }
+
+                    localStorage.setItem(cacheKey, finalUrl);
+                    return finalUrl;
+                } catch (error) {
+                    console.error('Failed to generate asset:', error);
+                    return null;
+                }
+            },
+
+            async getDefaultAssets() {
+                const defaults = {
+                    frog: await this.generateAsset("cute green cartoon frog character, friendly face, simple design", true),
+                    bug: await this.generateAsset("small cartoon fly or bug, golden color", true),
+                    background: await this.generateAsset("peaceful pond with lily pads, cartoon style")
+                };
+                return defaults;
+            }
+        };
+
+        // Game state management
+        function useGameState() {
+            const [gameState, setGameState] = useState({
+                bugs: 0,
+                bugsPerClick: 1,
+                bugsPerSecond: 0,
+                totalClicks: 0,
+                upgrades: {
+                    clickPower: { level: 0, cost: 10, multiplier: 2 },
+                    autoClicker: { level: 0, cost: 100, multiplier: 1.5 },
+                    frogSpeed: { level: 0, cost: 500, multiplier: 3 },
+                },
+                currentWorld: null,
+                assets: null
+            });
+
+            useEffect(() => {
+                const savedState = localStorage.getItem('frogClickerState');
+                if (savedState) {
+                    setGameState(prev => ({ ...prev, ...JSON.parse(savedState) }));
+                }
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('frogClickerState', JSON.stringify(gameState));
+            }, [gameState]);
+
+            useEffect(() => {
+                if (gameState.bugsPerSecond > 0) {
+                    const interval = setInterval(() => {
+                        setGameState(prev => ({
+                            ...prev,
+                            bugs: prev.bugs + prev.bugsPerSecond
+                        }));
+                    }, 1000);
+                    return () => clearInterval(interval);
+                }
+            }, [gameState.bugsPerSecond]);
+
+            return [gameState, setGameState];
+        }
+
+        // Click effect component
+        function ClickEffect({ x, y, value, onComplete }) {
+            useEffect(() => {
+                const timer = setTimeout(onComplete, 1000);
+                return () => clearTimeout(timer);
+            }, [onComplete]);
+
+            return (
+                <div 
+                    className="click-effect" 
+                    style={{ left: x, top: y }}
+                >
+                    +{value} 🐞
+                </div>
+            );
+        }
+
+        // Main game component
+        function FrogClicker() {
+            const [gameState, setGameState] = useGameState();
+            const [activeTab, setActiveTab] = useState('upgrades');
+            const [clickEffects, setClickEffects] = useState([]);
+            const [assets, setAssets] = useState(null);
+            const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
+
+            useEffect(() => {
+                if (!assets) {
+                    loadDefaultAssets();
+                }
+            }, []);
+
+            async function loadDefaultAssets() {
+                setIsGeneratingAssets(true);
+                try {
+                    const defaultAssets = await AssetManager.getDefaultAssets();
+                    setAssets(defaultAssets);
+                    setGameState(prev => ({ ...prev, assets: defaultAssets }));
+                } catch (error) {
+                    console.error('Failed to load assets:', error);
+                } finally {
+                    setIsGeneratingAssets(false);
+                }
+            }
+
+            function handleFrogClick(event) {
+                const rect = event.target.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                const earnedBugs = gameState.bugsPerClick;
+                
+                setGameState(prev => ({
+                    ...prev,
+                    bugs: prev.bugs + earnedBugs,
+                    totalClicks: prev.totalClicks + 1
+                }));
+
+                const effectId = Date.now() + Math.random();
+                setClickEffects(prev => [...prev, { id: effectId, x, y, value: earnedBugs }]);
+            }
+
+            function removeClickEffect(id) {
+                setClickEffects(prev => prev.filter(effect => effect.id !== id));
+            }
+
+            function buyUpgrade(upgradeType) {
+                const upgrade = gameState.upgrades[upgradeType];
+                const cost = Math.floor(upgrade.cost * Math.pow(upgrade.multiplier, upgrade.level));
+
+                if (gameState.bugs >= cost) {
+                    setGameState(prev => {
+                        const newState = { ...prev };
+                        newState.bugs -= cost;
+                        newState.upgrades[upgradeType].level += 1;
+
+                        switch (upgradeType) {
+                            case 'clickPower':
+                                newState.bugsPerClick = Math.floor(newState.bugsPerClick * 1.5);
+                                break;
+                            case 'autoClicker':
+                                newState.bugsPerSecond += 1;
+                                break;
+                            case 'frogSpeed':
+                                newState.bugsPerClick += 2;
+                                break;
+                        }
+
+                        return newState;
+                    });
+                }
+            }
+
+            if (isGeneratingAssets || !assets) {
+                return (
+                    <div className="game-container">
+                        <div className="header">
+                            <h1>🐸 Mr. Frog Clicker</h1>
+                            <p>Generating your swamp world... <span className="loading"></span></p>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="game-container">
+                    <div className="header">
+                        <h1>🐸 Mr. Frog Clicker: The Leap to Glory!</h1>
+                        <p>Click Mr. Frog to catch delicious bugs!</p>
+                    </div>
+
+                    <div className="game-content">
+                        <div className="main-game">
+                            <div className="stats">
+                                <div className="stat-card">
+                                    <div className="stat-value">{Math.floor(gameState.bugs)}</div>
+                                    <div>Bugs Caught</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{gameState.bugsPerClick}</div>
+                                    <div>Per Click</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{gameState.bugsPerSecond}</div>
+                                    <div>Per Second</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{gameState.totalClicks}</div>
+                                    <div>Total Clicks</div>
+                                </div>
+                            </div>
+
+                            <div className="frog-container">
+                                <img 
+                                    src={assets.frog} 
+                                    alt="Mr. Frog" 
+                                    className="frog"
+                                    onClick={handleFrogClick}
+                                    style={{ filter: assets.frog.includes('white background') ? 'brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%)' : 'none' }}
+                                />
+                                {clickEffects.map(effect => (
+                                    <ClickEffect 
+                                        key={effect.id}
+                                        x={effect.x}
+                                        y={effect.y}
+                                        value={effect.value}
+                                        onComplete={() => removeClickEffect(effect.id)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="sidebar">
+                            <div className="tabs">
+                                <button 
+                                    className={`tab ${activeTab === 'upgrades' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('upgrades')}
+                                >
+                                    Upgrades
+                                </button>
+                                <button 
+                                    className={`tab ${activeTab === 'gallery' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('gallery')}
+                                >
+                                    Gallery
+                                </button>
+                            </div>
+
+                            {activeTab === 'upgrades' && (
+                                <UpgradesPanel 
+                                    gameState={gameState} 
+                                    onBuyUpgrade={buyUpgrade}
+                                />
+                            )}
+
+                            {activeTab === 'gallery' && (
+                                <WorldGallery 
+                                    onLoadWorld={(world) => {
+                                        setAssets(world.assets);
+                                        setGameState(prev => ({ ...prev, currentWorld: world }));
+                                    }}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Upgrades panel component
+        function UpgradesPanel({ gameState, onBuyUpgrade }) {
+            const upgrades = [
+                {
+                    key: 'clickPower',
+                    name: 'Stronger Tongue',
+                    description: 'Increases bugs per click',
+                    icon: '👅'
+                },
+                {
+                    key: 'autoClicker',
+                    name: 'Fly Magnet',
+                    description: 'Automatically catches bugs',
+                    icon: '🧲'
+                },
+                {
+                    key: 'frogSpeed',
+                    name: 'Lightning Reflexes',
+                    description: 'Faster bug catching',
+                    icon: '⚡'
+                }
+            ];
+
+            return (
+                <div>
+                    <h3 style={{ color: 'white', marginBottom: '15px' }}>Upgrades</h3>
+                    {upgrades.map(upgrade => {
+                        const upgradeData = gameState.upgrades[upgrade.key];
+                        const cost = Math.floor(upgradeData.cost * Math.pow(upgradeData.multiplier, upgradeData.level));
+                        const canAfford = gameState.bugs >= cost;
+
+                        return (
+                            <div key={upgrade.key} className="upgrade-item">
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                                    <span style={{ fontSize: '1.5rem', marginRight: '10px' }}>{upgrade.icon}</span>
+                                    <div>
+                                        <div style={{ fontWeight: 'bold' }}>{upgrade.name}</div>
+                                        <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>Level {upgradeData.level}</div>
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
+                                    {upgrade.description}
+                                </div>
+                                <button 
+                                    className="upgrade-button"
+                                    onClick={() => onBuyUpgrade(upgrade.key)}
+                                    disabled={!canAfford}
+                                >
+                                    Buy for {cost} bugs
+                                </button>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // World gallery component
+        function WorldGallery({ onLoadWorld }) {
+            const [showCreateForm, setShowCreateForm] = useState(false);
+            const [newWorld, setNewWorld] = useState({
+                name: '',
+                description: '',
+                frogPrompt: '',
+                backgroundPrompt: ''
+            });
+            const [isCreating, setIsCreating] = useState(false);
+
+            const worlds = useSyncExternalStore(
+                room.collection('frog_world').subscribe,
+                room.collection('frog_world').getList
+            );
+
+            async function createWorld() {
+                if (!newWorld.name || !newWorld.frogPrompt) return;
+
+                setIsCreating(true);
+                try {
+                    const assets = {
+                        frog: await AssetManager.generateAsset(newWorld.frogPrompt, true),
+                        bug: await AssetManager.generateAsset("small cartoon fly or bug, golden color", true),
+                        background: newWorld.backgroundPrompt ? 
+                            await AssetManager.generateAsset(newWorld.backgroundPrompt) : 
+                            await AssetManager.generateAsset("peaceful pond with lily pads, cartoon style")
+                    };
+
+                    await room.collection('frog_world').create({
+                        name: newWorld.name,
+                        description: newWorld.description,
+                        frogPrompt: newWorld.frogPrompt,
+                        backgroundPrompt: newWorld.backgroundPrompt,
+                        assets: assets,
+                        thumbnail: assets.frog
+                    });
+
+                    setNewWorld({ name: '', description: '', frogPrompt: '', backgroundPrompt: '' });
+                    setShowCreateForm(false);
+                } catch (error) {
+                    console.error('Failed to create world:', error);
+                } finally {
+                    setIsCreating(false);
+                }
+            }
+
+            return (
+                <div>
+                    <h3 style={{ color: 'white', marginBottom: '15px' }}>World Gallery</h3>
+                    
+                    {!showCreateForm && (
+                        <button 
+                            className="primary-button"
+                            onClick={() => setShowCreateForm(true)}
+                            style={{ width: '100%', marginBottom: '20px' }}
+                        >
+                            + Create New World
+                        </button>
+                    )}
+
+                    {showCreateForm && (
+                        <div className="create-world-form">
+                            <h4 style={{ color: 'white', marginBottom: '15px' }}>Create New World</h4>
+                            
+                            <div className="form-group">
+                                <label>World Name</label>
+                                <input 
+                                    type="text"
+                                    value={newWorld.name}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="e.g., Mystic Swamp"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea 
+                                    value={newWorld.description}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, description: e.target.value }))}
+                                    placeholder="Describe your world..."
+                                    rows="2"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Frog Description</label>
+                                <input 
+                                    type="text"
+                                    value={newWorld.frogPrompt}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, frogPrompt: e.target.value }))}
+                                    placeholder="e.g., magical purple frog with sparkles"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Background Description (optional)</label>
+                                <input 
+                                    type="text"
+                                    value={newWorld.backgroundPrompt}
+                                    onChange={(e) => setNewWorld(prev => ({ ...prev, backgroundPrompt: e.target.value }))}
+                                    placeholder="e.g., enchanted forest with glowing mushrooms"
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button 
+                                    className="primary-button"
+                                    onClick={createWorld}
+                                    disabled={isCreating || !newWorld.name || !newWorld.frogPrompt}
+                                >
+                                    {isCreating ? <span className="loading"></span> : 'Create World'}
+                                </button>
+                                <button 
+                                    className="primary-button"
+                                    onClick={() => setShowCreateForm(false)}
+                                    style={{ background: '#666' }}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="world-gallery">
+                        {worlds.reverse().map(world => (
+                            <div 
+                                key={world.id} 
+                                className="world-card"
+                                onClick={() => onLoadWorld(world)}
+                            >
+                                <div 
+                                    className="world-thumbnail"
+                                    style={{ backgroundImage: `url(${world.thumbnail})` }}
+                                />
+                                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+                                    {world.name}
+                                </div>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                                    by {world.username}
+                                </div>
+                                {world.description && (
+                                    <div style={{ fontSize: '0.7rem', marginTop: '5px', opacity: 0.7 }}>
+                                        {world.description}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<FrogClicker />, document.getElementById('root'));
+    </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
