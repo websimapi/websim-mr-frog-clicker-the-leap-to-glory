@@ -413,7 +413,7 @@
             async generateWorldAssets(worldData) {
                 try {
                     const assetPromises = {
-                        frog: this.generateAsset(worldData.frogPrompt + ", white background", true),
+                        frog: this.generateAsset(`Mr. Frog character as ${worldData.frogPrompt}, white background`, true),
                         bug: this.generateAsset((worldData.bugPrompt || "small cartoon fly or bug, golden color") + ", white background", true),
                         background: this.generateAsset(worldData.backgroundPrompt),
                         foreground: worldData.foregroundPrompt ? 
